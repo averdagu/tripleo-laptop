@@ -6,7 +6,7 @@ if [[ ! -d ~/templates ]]; then
     ln -s /usr/share/openstack-tripleo-heat-templates templates
 fi
 if [[ ! -d ~/tht ]]; then
-    ln -s tripleo-laptop/tht 
+    ln -s tripleo-laptop/tht
 fi
 
 for IP in $(grep 192.168.24 tht/ctlplane-assignments.yaml | grep -v 192.168.24.1 | awk {'print $3'}); do

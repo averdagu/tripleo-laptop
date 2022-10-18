@@ -21,11 +21,14 @@ if [[ ! -e ~/.ssh/id_rsa.pub ]]; then
     echo "Please run ssh-keygen"
     exit 1
 else
-    KEY=$(cat ~/.ssh/id_ed25519.pub)
+    KEY=$(cat ~/.ssh/id_rsa.pub)
+    GERRIT_PUB_KEY=~/.ssh/upstream_gerrit.pub
+    GERRIT_PRIV_KEY=~/.ssh/upstream_gerrit
 fi
 if [[ ! -e ~/.ssh/config ]]; then
     cat /dev/null > ~/.ssh/config
     echo "StrictHostKeyChecking no" >> ~/.ssh/config
+    echo "PubkeyAcceptedKeyTypes +rsa-sha2-256,rsa-sha2-512" >> ~/.ssh/config
     echo "UserKnownHostsFile=/dev/null" >> ~/.ssh/config
     echo "LogLevel ERROR" >> ~/.ssh/config
     chmod 0600 ~/.ssh/config
@@ -33,7 +36,7 @@ if [[ ! -e ~/.ssh/config ]]; then
 fi
 SSH_OPT="-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null"
 # -------------------------------------------------------
-sudo yum install -y libguestfs-tools xz libvirt virt-install
+sudo dnf install -y libguestfs-tools xz libvirt virt-install
 if [[ ! $(sudo systemctl status libvirtd) ]]; then
    sudo systemctl start libvirtd
 fi
@@ -50,14 +53,14 @@ if [[ ! $(sudo virsh net-list | grep ctlplane) ]]; then
     BR_NAME=ctlplane
     MAC=52:54:00:e5:01:42
     echo "Creating virtual bridge $BR_NAME"
-    
+
     cat /dev/null > /tmp/net.xml
     echo "<network>" >> /tmp/net.xml
     echo "<name>$BR_NAME</name>" >> /tmp/net.xml
     echo "<bridge name='$BR_NAME' stp='off' delay='0'/>" >> /tmp/net.xml
     echo "<mac address='$MAC'/>" >> /tmp/net.xml
     echo "</network>" >> /tmp/net.xml
-    
+
     sudo virsh net-define /tmp/net.xml
     sudo virsh net-start $BR_NAME
     sudo virsh net-autostart $BR_NAME
@@ -128,6 +131,8 @@ ssh $SSH_OPT root@$IP 'useradd stack'
 ssh $SSH_OPT root@$IP 'echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack'
 ssh $SSH_OPT root@$IP 'chmod 0440 /etc/sudoers.d/stack'
 ssh $SSH_OPT root@$IP "mkdir /home/stack/.ssh/; chmod 700 /home/stack/.ssh/; echo $KEY > /home/stack/.ssh/authorized_keys; chmod 600 /home/stack/.ssh/authorized_keys; chcon system_u:object_r:ssh_home_t:s0 /home/stack/.ssh ; chcon unconfined_u:object_r:ssh_home_t:s0 /home/stack/.ssh/authorized_keys; chown -R stack:stack /home/stack/.ssh/ "
+scp $SSH_OPT ${GERRIT_PUB_KEY} stack@$IP:.ssh/
+scp $SSH_OPT ${GERRIT_PRIV_KEY} stack@$IP:.ssh/
 ssh $SSH_OPT root@$IP "echo nameserver 192.168.122.1 > /etc/resolv.conf"
 echo "$IP is ready"
 ssh $SSH_OPT stack@$IP "uname -a"
