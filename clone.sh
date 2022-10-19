@@ -141,7 +141,7 @@ if [[ $NAME == "undercloud" || $NAME == "standalone" || $NAME == "overcloud0" ||
     echo "sudo yum install -y tmux vim git" >> git.sh
     echo "ssh-keyscan github.com >> ~/.ssh/known_hosts" >> git.sh
     #echo "git clone git@github.com:averdagu/tripleo-laptop.git" >> git.sh
-    echo "git clone git@github.com:averdagu/zed.git" >> git.sh
+    echo "git clone git@github.com:averdagu/zed.git --config core.sshCommand='ssh -i ~/.ssh/upstream_gerrit'" >> git.sh
 
     scp $SSH_OPT git.sh stack@$NAME:/home/stack/
     ssh $SSH_OPT stack@$NAME "chmod 755 git.sh"

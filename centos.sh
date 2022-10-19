@@ -128,6 +128,7 @@ echo "Updating /etc/hosts"
 ssh $SSH_OPT root@$IP 'echo "$IP    $NAME.$DOM        $NAME" >> /etc/hosts'
 echo "Creating stack user"
 ssh $SSH_OPT root@$IP 'useradd stack'
+ssh $SSH_OPT root@$IP 'echo "stack" | passwd stack --stdin'
 ssh $SSH_OPT root@$IP 'echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack'
 ssh $SSH_OPT root@$IP 'chmod 0440 /etc/sudoers.d/stack'
 ssh $SSH_OPT root@$IP "mkdir /home/stack/.ssh/; chmod 700 /home/stack/.ssh/; echo $KEY > /home/stack/.ssh/authorized_keys; chmod 600 /home/stack/.ssh/authorized_keys; chcon system_u:object_r:ssh_home_t:s0 /home/stack/.ssh ; chcon unconfined_u:object_r:ssh_home_t:s0 /home/stack/.ssh/authorized_keys; chown -R stack:stack /home/stack/.ssh/ "
