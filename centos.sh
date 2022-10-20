@@ -22,6 +22,8 @@ if [[ ! -e ~/.ssh/id_rsa.pub ]]; then
     exit 1
 else
     KEY=$(cat ~/.ssh/id_rsa.pub)
+    PRIVATE_KEY_FILE=~/.ssh/id_rsa
+    PUBLIC_KEY_FILE=~/.ssh/id_rsa.pub
     GERRIT_PUB_KEY=~/.ssh/upstream_gerrit.pub
     GERRIT_PRIV_KEY=~/.ssh/upstream_gerrit
 fi
@@ -132,8 +134,12 @@ ssh $SSH_OPT root@$IP 'echo "stack" | passwd stack --stdin'
 ssh $SSH_OPT root@$IP 'echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack'
 ssh $SSH_OPT root@$IP 'chmod 0440 /etc/sudoers.d/stack'
 ssh $SSH_OPT root@$IP "mkdir /home/stack/.ssh/; chmod 700 /home/stack/.ssh/; echo $KEY > /home/stack/.ssh/authorized_keys; chmod 600 /home/stack/.ssh/authorized_keys; chcon system_u:object_r:ssh_home_t:s0 /home/stack/.ssh ; chcon unconfined_u:object_r:ssh_home_t:s0 /home/stack/.ssh/authorized_keys; chown -R stack:stack /home/stack/.ssh/ "
-scp $SSH_OPT ${GERRIT_PUB_KEY} stack@$IP:.ssh/
-scp $SSH_OPT ${GERRIT_PRIV_KEY} stack@$IP:.ssh/
+scp $SSH_OPT {$PRIVATE_KEY_FILE,$PUBLIC_KEY_FILE,$GERRIT_PUB_KEY,$GERRIT_PRIV_KEY} stack@$IP:.ssh/
+ssh $SSH_OPT root@$IP 'echo "Host review.*.org" > /home/stack/.ssh/config'
+#ssh $SSH_OPT root@$IP 'echo "  Hostname review.openstack.org" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'echo "  IdentityFile ~/.ssh/upstream_gerrit" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'echo "  PubKeyAcceptedKeyTypes +ssh-rsa,rsa-sha2-256,rsa-sha2-512" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'chown stack:stack /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP "echo nameserver 192.168.122.1 > /etc/resolv.conf"
 echo "$IP is ready"
 ssh $SSH_OPT stack@$IP "uname -a"
