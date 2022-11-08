@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 # -------------------------------------------------------
+
+# set -x
+
+export LIBVIRT_DEFAULT_URI="qemu:///system"
+
 IP=192.168.122.253
 NAME=centos
 RAM=8192
@@ -80,7 +85,7 @@ fi
 echo "Building new $NAME"
 pushd /var/lib/libvirt/images/
 sudo qemu-img info $IMG
-SIZE=$(sudo qemu-img info /var/lib/libvirt/images/$IMG | grep virtual | awk {'print $3'} | grep G | sed -e s/G// -e s/\.0//g)
+SIZE=$(sudo qemu-img info /var/lib/libvirt/images/$IMG | grep virtual | awk {'print $3'})
 if [[ $SIZE -lt 37 ]]; then  # if we have a new base cloud image grow the filesystem
     echo "Customizing base $IMG"
     sudo virt-filesystems --long -h --all -a $IMG
@@ -139,6 +144,9 @@ ssh $SSH_OPT root@$IP 'echo "Host review.*.org" > /home/stack/.ssh/config'
 #ssh $SSH_OPT root@$IP 'echo "  Hostname review.openstack.org" >> /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP 'echo "  IdentityFile ~/.ssh/upstream_gerrit" >> /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP 'echo "  PubKeyAcceptedKeyTypes +ssh-rsa,rsa-sha2-256,rsa-sha2-512" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'echo "  StrictHostKeyChecking no" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'echo "  GlobalKnownHostsFile /dev/null" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'echo "  UserKnownHostFile /dev/null" >> /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP 'chown stack:stack /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP "echo nameserver 192.168.122.1 > /etc/resolv.conf"
 echo "$IP is ready"

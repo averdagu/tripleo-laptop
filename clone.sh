@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 # -------------------------------------------------------
+
+set -x
+
+export LIBVIRT_DEFAULT_URI="qemu:///system"
+
 DISKS=0
 DOM=example.com
 NUMBER=0
