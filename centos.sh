@@ -146,7 +146,7 @@ ssh $SSH_OPT root@$IP 'echo "  IdentityFile ~/.ssh/upstream_gerrit" >> /home/sta
 ssh $SSH_OPT root@$IP 'echo "  PubKeyAcceptedKeyTypes +ssh-rsa,rsa-sha2-256,rsa-sha2-512" >> /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP 'echo "  StrictHostKeyChecking no" >> /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP 'echo "  GlobalKnownHostsFile /dev/null" >> /home/stack/.ssh/config'
-ssh $SSH_OPT root@$IP 'echo "  UserKnownHostFile /dev/null" >> /home/stack/.ssh/config'
+ssh $SSH_OPT root@$IP 'echo "  UserKnownHostsFile /dev/null" >> /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP 'chown stack:stack /home/stack/.ssh/config'
 ssh $SSH_OPT root@$IP "echo nameserver 192.168.122.1 > /etc/resolv.conf"
 echo "$IP is ready"
