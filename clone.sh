@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # -------------------------------------------------------
 
-set -x
+#set -x
 
 export LIBVIRT_DEFAULT_URI="qemu:///system"
 
@@ -115,6 +115,7 @@ for i in $(seq 0 $(( $NUMBER - 1 )) ); do
         ssh $SSH_OPT root@$IP "echo nameserver 8.8.4.4 >> /etc/resolv.conf"
         sudo sh -c "echo $IP    $NAME >> /tmp/hosts"
     else
+        #ssh $SSH_OPT root@$IP "echo $NAME.$DOM > /etc/hostname"
         ssh $SSH_OPT root@$IP "hostname $NAME.$DOM ; echo HOSTNAME=$NAME.$DOM >> /etc/sysconfig/network"
         ssh $SSH_OPT root@$IP "echo \"$IP    $NAME.$DOM        $NAME\" >> /etc/hosts "
         sudo sh -c "echo $IP    $NAME.$DOM        $NAME >> /etc/hosts"
@@ -124,6 +125,27 @@ for i in $(seq 0 $(( $NUMBER - 1 )) ); do
     echo ""
     echo "ssh stack@$NAME"
     echo ""
+
+    # Add the git.sh inside the loop, if not only the last overcloud will have it.
+    if [[ $NAME == "undercloud" || $NAME == "standalone" || $NAME =~ overcloud[0-9] || $NAME == "ceph" ]]; then
+        # install repos for centos9
+        scp $SSH_OPT repos/* stack@$NAME:/tmp/
+        ssh $SSH_OPT root@$NAME "mv /tmp/*.repo /etc/yum.repos.d/"
+
+        echo "" > git.sh
+        echo "sudo yum install -y tmux vim git" >> git.sh
+        echo "ssh-keyscan github.com >> ~/.ssh/known_hosts" >> git.sh
+        #echo "git clone git@github.com:averdagu/tripleo-laptop.git" >> git.sh
+        echo "git clone git@github.com:averdagu/zed.git --config core.sshCommand='ssh -i ~/.ssh/upstream_gerrit'" >> git.sh
+
+        scp $SSH_OPT git.sh stack@$NAME:/home/stack/
+        ssh $SSH_OPT stack@$NAME "chmod 755 git.sh"
+        rm git.sh
+        if [[ $NAME == "node0" ]]; then
+            scp $SSH_OPT /tmp/hosts stack@$NAME:/home/stack/hosts
+            rm -f /tmp/hosts
+        fi
+    fi
 
     # decrement the IP by one for the next loop
     TAIL=$(echo $IP | awk -F  "." '/1/ {print $4}')
@@ -137,22 +159,3 @@ if [[ "$1" = "node" ]]; then
 fi
 
 
-if [[ $NAME == "undercloud" || $NAME == "standalone" || $NAME == "overcloud0" || $NAME == "ceph" ]]; then
-    # install repos for centos9
-    scp $SSH_OPT repos/* stack@$NAME:/tmp/
-    ssh $SSH_OPT root@$NAME "mv /tmp/*.repo /etc/yum.repos.d/"
-
-    echo "" > git.sh
-    echo "sudo yum install -y tmux vim git" >> git.sh
-    echo "ssh-keyscan github.com >> ~/.ssh/known_hosts" >> git.sh
-    #echo "git clone git@github.com:averdagu/tripleo-laptop.git" >> git.sh
-    echo "git clone git@github.com:averdagu/zed.git --config core.sshCommand='ssh -i ~/.ssh/upstream_gerrit'" >> git.sh
-
-    scp $SSH_OPT git.sh stack@$NAME:/home/stack/
-    ssh $SSH_OPT stack@$NAME "chmod 755 git.sh"
-    rm git.sh
-    if [[ $NAME == "node0" ]]; then
-        scp $SSH_OPT /tmp/hosts stack@$NAME:/home/stack/hosts
-        rm -f /tmp/hosts
-    fi
-fi
